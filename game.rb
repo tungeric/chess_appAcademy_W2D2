@@ -55,6 +55,7 @@ class Game
 
   def play
     until over?
+      @display.message = "#{@current_player.color}, it's your turn"
       @display.message = "#{@current_player.color}, it's your turn - your king is in Check!" if king_in_check?
       get_move
       change_player
@@ -69,7 +70,7 @@ class Game
         start_pos, end_pos = @current_player.get_input
         @board.move_piece(start_pos, end_pos)
         distance_moved = diff(start_pos, end_pos)
-        if @board[end_pos].is_a?(King) && distance_moved == 2
+        if @board[end_pos].is_a?(King) && distance_moved.abs == 2
           complete_castle(distance_moved)
         end
         break unless king_in_check?
@@ -89,7 +90,7 @@ class Game
   def diff(start_pos, end_pos)
     x1,y1 = start_pos
     x2,y2 = end_pos
-    ((x2-x1)**2 + (y2-y1)**2)**0.5
+    x2-x1
   end
 
   def complete_castle(distance_moved)
@@ -132,6 +133,10 @@ class Game
     opponents.any? do |piece|
       @board.valid_move?(piece.pos, king.pos)
     end
+  end
+
+  def check_mate?
+    return false if !king_in_check?
   end
 
   def change_player
