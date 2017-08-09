@@ -1,0 +1,5 @@
+1. When user hits delete (or something), UNDO PREVIOUS MOVES
+2. Castling
+  * King cannot move through check
+3. En Passant
+4. Highlight possible moves when piece is selected

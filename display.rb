@@ -20,21 +20,23 @@ class Display
   end
 
   def render
-    puts("-" + "----" * @grid.length)
+    #puts("-" + "---" * @grid.length)
     @grid.transpose.each_with_index do |row, idx|
-      print("|")
+      #print("|")
       row.each_with_index do |piece, jdx|
-        cell_content = " #{piece.to_s} "
+        cell_content = "#{piece.to_s} "
         if @cursor.cursor_pos == [idx,jdx]
-          print cell_content.colorize(:background => @cursor.get_color) + "|"
+          print cell_content.colorize(:background => @cursor.get_color) #+ "|"
+        elsif idx.even? && jdx.odd? || idx.odd? && jdx.even?
+          print cell_content.colorize(:background => :light_white) #+ "|"
         else
-          print cell_content + "|"
+          print cell_content #+ "|"
         end
       end
       puts
-      print("-" + "----" * @grid.length)
-      puts
     end
+    #print("-" + "---" * @grid.length)
+    puts
     puts @message
     nil
   end

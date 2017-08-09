@@ -6,9 +6,6 @@ class Piece
     @color = color
     @pos = pos
   end
-
-
-
 end
 
 class NullPiece < Piece
@@ -38,6 +35,13 @@ class King < StepPiece
     [1,-1],
     [0,-1],
     [-1,-1]]
+
+  attr_accessor :has_moved
+  def initialize(color, pos)
+    super
+    @has_moved = false
+  end
+
   def to_s
     @color == :white ? '♔' : '♚'
   end
@@ -93,6 +97,13 @@ class Rook < SlidePiece
     [-1,0],
     [0,-1]
   ]
+
+  attr_accessor :has_moved
+  def initialize(color, pos)
+    super
+    @has_moved = false
+  end
+
   def to_s
     @color == :white ? '♖' : '♜'
   end

@@ -5,7 +5,7 @@ require_relative "player.rb"
 require 'byebug'
 
 class Game
-  attr_reader :current_player, :board
+  attr_reader :current_player, :board, :all_pieces
   def initialize
     @board = Board.new
     @display = Display.new(@board)
@@ -17,6 +17,7 @@ class Game
     @current_player = @player1
     @player1.color = :white
     @player2.color = :black
+    @all_pieces = @board.grid.flatten
   end
 
   def get_num_human_players
@@ -54,10 +55,10 @@ class Game
 
   def play
     until over?
-      @display.message = "Check!" if king_in_check?
+      @display.message = "#{@current_player.color}, it's your turn - your king is in Check!" if king_in_check?
       get_move
-      @display.message = ""
       change_player
+      @display.message = "#{@current_player.color}, it's your turn!"
     end
   end
 
@@ -67,33 +68,65 @@ class Game
       loop do
         start_pos, end_pos = @current_player.get_input
         @board.move_piece(start_pos, end_pos)
+        distance_moved = diff(start_pos, end_pos)
+        if @board[end_pos].is_a?(King) && distance_moved == 2
+          complete_castle(distance_moved)
+        end
         break unless king_in_check?
-        @display.message = "Your king is in check!"
-        @board.unmove_piece(end_pos, start_pos)
+        @display.message = "#{@current_player.color}, your king is in check!"
+        @board.force_move_piece(end_pos, start_pos)
       end
+      update_castle_eligibility
     rescue WrongColorError
-      @display.message = "That's not your piece!"
+      @display.message = "#{@current_player.color}, that's not your piece!"
       retry
     rescue InvalidMoveError
-      @display.message = "Enter a valid move"
+      @display.message = "#{@current_player.color}, enter a valid move"
       retry
-    # ensure
-    #   @display.clear_and_render
     end
+  end
+
+  def diff(start_pos, end_pos)
+    x1,y1 = start_pos
+    x2,y2 = end_pos
+    ((x2-x1)**2 + (y2-y1)**2)**0.5
+  end
+
+  def complete_castle(distance_moved)
+    row = (@current_player.color == :white ? 7 : 0)
+    king_pos = get_king.pos
+
+    if distance_moved > 0
+      @board.force_move_piece([7,row],[king_pos.first-1,row])
+    else
+      @board.force_move_piece([0,row],[king_pos.first+1,row])
+    end
+  end
+
+  def get_king
+    @all_pieces.select do |piece|
+      piece.is_a?(King) && piece.color == @current_player.color
+    end.last
+  end
+
+  def update_castle_eligibility
+    row = @current_player.color == :white ? 7 : 0
+    king = get_king
+    king.has_moved = true if king.pos!=[4,row]
+    # debuggerg
+    rooks = @all_pieces.select do |piece|
+      piece.is_a?(Rook) && piece.color == @current_player.color
+    end
+    rooks.each { |rook| rook.has_moved = true unless rook.pos==[0,row] || rook.pos==[7,row] }
   end
 
   def over?
     false
   end
 
-
-
   def king_in_check?
-    all_pieces = @board.grid.flatten
-    king = all_pieces.select do |piece|
-      piece.is_a?(King) && piece.color == @current_player.color
-    end.last
-    opponents = all_pieces.select do |piece|
+    king = get_king
+    opponents = @all_pieces.select do |piece|
       !piece.is_a?(NullPiece) && piece.color != @current_player.color
     end
     opponents.any? do |piece|
